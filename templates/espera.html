@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espera - Digiturno</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h2 class="mb-0">
+                            {% if tipo_servicio == 'citas' %}
+                                <i class="fas fa-calendar-check me-2"></i>Citas Médicas
+                            {% elif tipo_servicio == 'facturacion' %}
+                                <i class="fas fa-file-invoice-dollar me-2"></i>Facturación
+                            {% elif tipo_servicio == 'famisanar' %}
+                                <i class="fas fa-heartbeat me-2"></i>Famisanar
+                            {% elif tipo_servicio == 'sanitas' %}
+                                <i class="fas fa-hospital me-2"></i>Sanitas
+                            {% endif %}
+                        </h2>
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <div class="servicio-actual">
+                            Su turno es:
+                        </div>
+                        
+                        <div class="turno-display">
+                            {{ turno.numero_turno }}
+                        </div>
+
+                        <div class="info-paciente">
+                            <p class="mb-2">
+                                <i class="fas fa-id-card me-2"></i>
+                                <strong>Documento:</strong> {{ turno.documento }}
+                            </p>
+                            {% if turno.nombre %}
+                            <p class="mb-0">
+                                <i class="fas fa-user me-2"></i>
+                                <strong>Nombre:</strong> {{ turno.nombre }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Por favor espere a ser llamado en el panel de turnos
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-home me-2"></i>Volver al Inicio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

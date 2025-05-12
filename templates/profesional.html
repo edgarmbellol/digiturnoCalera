@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Profesional - Digiturno</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-color);">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-hospital-user me-2"></i>
+                Panel Profesional
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <i class="fas fa-user me-2"></i>
+                            {{ session.get('usuario_nombre', '') }}
+                        </span>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-light">
+                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <ul class="nav nav-tabs card-header-tabs" id="serviciosTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="citas-tab" data-bs-toggle="tab" data-bs-target="#citas" type="button" role="tab">
+                                        <i class="fas fa-stethoscope me-2"></i>Citas Médicas
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="facturacion-tab" data-bs-toggle="tab" data-bs-target="#facturacion" type="button" role="tab">
+                                        <i class="fas fa-file-invoice-dollar me-2"></i>Facturación
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="famisanar-tab" data-bs-toggle="tab" data-bs-target="#famisanar" type="button" role="tab">
+                                        <i class="fas fa-heartbeat me-2"></i>Famisanar
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="sanitas-tab" data-bs-toggle="tab" data-bs-target="#sanitas" type="button" role="tab">
+                                        <i class="fas fa-hospital me-2"></i>Sanitas
+                                    </button>
+                                </li>
+                            </ul>
+                            <small class="text-muted" id="ultimaActualizacion">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Última actualización: <span id="tiempoActualizacion">--:--:--</span>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="serviciosTabsContent">
+                            <div class="tab-pane fade show active" id="citas" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Turno</th>
+                                                <th>Documento</th>
+                                                <th>Nombre</th>
+                                                <th>Hora</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="turnosCitas">
+                                            <!-- Los turnos se cargarán dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="facturacion" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Turno</th>
+                                                <th>Documento</th>
+                                                <th>Nombre</th>
+                                                <th>Hora</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="turnosFacturacion">
+                                            <!-- Los turnos se cargarán dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="famisanar" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Turno</th>
+                                                <th>Documento</th>
+                                                <th>Nombre</th>
+                                                <th>Hora</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="turnosFamisanar">
+                                            <!-- Los turnos se cargarán dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="sanitas" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Turno</th>
+                                                <th>Documento</th>
+                                                <th>Nombre</th>
+                                                <th>Hora</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="turnosSanitas">
+                                            <!-- Los turnos se cargarán dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-bell me-2"></i>
+                            Turno Actual
+                        </h3>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="turnoActual" class="turno-display mb-4">
+                            {% if turno_actual %}
+                                {{ turno_actual.numero_turno }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                        
+                        <div id="infoPaciente" class="info-paciente">
+                            {% if turno_actual %}
+                                <p class="mb-2">
+                                    <i class="fas fa-id-card me-2"></i>
+                                    <strong>Documento:</strong> {{ turno_actual.documento }}
+                                </p>
+                                <p class="mb-0">
+                                    <i class="fas fa-user me-2"></i>
+                                    <strong>Nombre:</strong> {{ turno_actual.nombre }}
+                                </p>
+                            {% else %}
+                                <p class="text-muted">No hay turno activo</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const turnoActual = document.getElementById('turnoActual');
+            const infoPaciente = document.getElementById('infoPaciente');
+            const tiempoActualizacion = document.getElementById('tiempoActualizacion');
+            const servicios = ['citas', 'facturacion', 'famisanar', 'sanitas'];
+            let turnosActuales = {};
+            let ultimaActualizacion = null;
+            let servicioActivo = 'citas';
+
+            // Conectar al WebSocket
+            const socket = io();
+
+            // Manejar conexión
+            socket.on('connect', () => {
+                console.log('Conectado al servidor');
+                // Solicitar turnos del servicio activo
+                socket.emit('solicitar_turnos', { servicio: servicioActivo });
+            });
+
+            // Manejar desconexión
+            socket.on('disconnect', () => {
+                console.log('Desconectado del servidor');
+            });
+
+            // Escuchar actualizaciones de turnos
+            servicios.forEach(servicio => {
+                socket.on(`turnos_actualizados_${servicio}`, (data) => {
+                    actualizarTablaTurnos(servicio, data.turnos);
+                    if (data.ultima_actualizacion) {
+                        ultimaActualizacion = data.ultima_actualizacion;
+                        tiempoActualizacion.textContent = ultimaActualizacion;
+                    }
+                });
+            });
+
+            // Función para actualizar la tabla de turnos
+            function actualizarTablaTurnos(servicio, turnos) {
+                const tbody = document.getElementById(`turnos${servicio.charAt(0).toUpperCase() + servicio.slice(1)}`);
+                tbody.innerHTML = turnos.map(turno => `
+                    <tr>
+                        <td>${turno.numero_turno}</td>
+                        <td>${turno.documento}</td>
+                        <td>${turno.nombre}</td>
+                        <td>${turno.hora}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm llamar-turno" 
+                                    data-turno="${turno.numero_turno}"
+                                    data-documento="${turno.documento}"
+                                    data-nombre="${turno.nombre}"
+                                    data-servicio="${servicio}">
+                                <i class="fas fa-bell me-1"></i>Llamar
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Guardar los turnos actuales para este servicio
+                turnosActuales[servicio] = turnos;
+                
+                // Si este es el servicio activo, actualizar el turno actual
+                if (servicio === servicioActivo) {
+                    actualizarTurnoActual(servicio);
+                }
+            }
+
+            // Función para actualizar el turno actual
+            function actualizarTurnoActual(servicio) {
+                const turnos = turnosActuales[servicio] || [];
+                if (turnos.length > 0) {
+                    const turno = turnos[0];
+                    turnoActual.textContent = turno.numero_turno;
+                    infoPaciente.innerHTML = `
+                        <p class="mb-2">
+                            <i class="fas fa-id-card me-2"></i>
+                            <strong>Documento:</strong> ${turno.documento}
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            <strong>Nombre:</strong> ${turno.nombre}
+                        </p>
+                    `;
+                } else {
+                    turnoActual.textContent = '-';
+                    infoPaciente.innerHTML = '<p class="text-muted">No hay turnos pendientes</p>';
+                }
+            }
+
+            // Llamar turno
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.llamar-turno')) {
+                    const button = e.target.closest('.llamar-turno');
+                    const turno = button.dataset.turno;
+                    const documento = button.dataset.documento;
+                    const nombre = button.dataset.nombre;
+                    const servicio = button.dataset.servicio;
+
+                    fetch('/llamar_turno', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            numero_turno: turno,
+                            documento: documento,
+                            nombre: nombre,
+                            tipo_servicio: servicio
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // La actualización vendrá a través del WebSocket
+                            console.log('Turno llamado exitosamente');
+                        }
+                    });
+                }
+            });
+
+            // Actualizar turnos al cambiar de pestaña
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function (e) {
+                    servicioActivo = e.target.id.split('-')[0];
+                    actualizarTurnoActual(servicioActivo);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 
