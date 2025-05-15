@@ -40,7 +40,8 @@ def actualizar_turnos_servicio(servicio):
                 'numero_turno': t['numero_turno'],
                 'documento': t['documento'],
                 'nombre': t['nombre'],
-                'hora': t['fecha_creacion'].strftime('%H:%M')
+                'hora': t['fecha_creacion'].strftime('%H:%M'),
+                'condicion_especial': t['condicion_especial']
             } for t in turnos],
             'ultima_actualizacion': datetime.now().strftime('%H:%M:%S')
         })
@@ -78,7 +79,8 @@ def handle_solicitar_turnos(data):
             'numero_turno': t['numero_turno'],
             'documento': t['documento'],
             'nombre': t['nombre'],
-            'hora': t['fecha_creacion'].strftime('%H:%M')
+            'hora': t['fecha_creacion'].strftime('%H:%M'),
+            'condicion_especial': t['condicion_especial']
         } for t in turnos],
         'ultima_actualizacion': ultima_actualizacion.strftime('%H:%M:%S') if ultima_actualizacion else None
     })
@@ -101,9 +103,11 @@ def login():
     if request.method == 'POST':
         usuario = request.form.get('usuario')
         clave = request.form.get('clave')
+        ventanilla = request.form.get('ventanilla')
+        tipo_servicio = request.form.get('tipo_servicio')
         
-        if not usuario or not clave:
-            return render_template('login.html', error='Por favor ingrese usuario y contraseña')
+        if not usuario or not clave or not ventanilla or not tipo_servicio:
+            return render_template('login.html', error='Por favor complete todos los campos')
         
         resultado = validar_usuario(usuario, clave)
         
@@ -113,7 +117,8 @@ def login():
         # Guardar información del usuario en la sesión
         session['usuario_id'] = usuario
         session['usuario_nombre'] = resultado
-        session['tipo_servicio'] = request.form.get('tipo_servicio', 'citas')
+        session['ventanilla'] = ventanilla
+        session['tipo_servicio'] = tipo_servicio
         
         return redirect(url_for('panel_profesional'))
     
@@ -195,6 +200,7 @@ def ingreso():
         tipo_servicio = request.form.get('tipo_servicio')
         cedula = request.form.get('cedula')
         nombre = request.form.get('nombre')
+        condicion_especial = request.form.get('condicion_especial', 'ninguna')
         
         # Verificar si el paciente existe en CITISALUD
         resultado = verificar_paciente(cedula)
@@ -211,7 +217,8 @@ def ingreso():
         turno = generar_turno(
             tipo_servicio=tipo_servicio,
             documento=cedula,
-            nombre=nombre if not resultado['existe'] else resultado['nombre_completo']
+            nombre=nombre if not resultado['existe'] else resultado['nombre_completo'],
+            condicion_especial=condicion_especial
         )
         
         if 'error' in turno:
@@ -222,6 +229,9 @@ def ingreso():
         
         # Guardar el turno en la sesión
         session['turno_actual'] = turno
+        
+        # Actualizar inmediatamente los turnos en el panel profesional
+        actualizar_turnos_servicio(tipo_servicio)
         
         return redirect(url_for('espera', tipo_servicio=tipo_servicio))
     

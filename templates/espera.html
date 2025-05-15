@@ -47,6 +47,19 @@
                                 <strong>Nombre:</strong> {{ turno.nombre }}
                             </p>
                             {% endif %}
+                            {% if turno.condicion_especial and turno.condicion_especial != 'ninguna' %}
+                            <p class="mb-0">
+                                <i class="fas fa-heart me-2"></i>
+                                <strong>Condición Especial:</strong> 
+                                {% if turno.condicion_especial == 'gestante' %}
+                                    Gestante
+                                {% elif turno.condicion_especial == 'adulto_mayor' %}
+                                    Adulto Mayor
+                                {% elif turno.condicion_especial == 'discapacidad' %}
+                                    Discapacidad
+                                {% endif %}
+                            </p>
+                            {% endif %}
                         </div>
 
                         <div class="alert alert-info" role="alert">

@@ -32,8 +32,17 @@ def crear_tabla_turnos():
                         Documento VARCHAR(20) NOT NULL,
                         Nombre VARCHAR(100),
                         FechaCreacion DATETIME NOT NULL,
-                        Estado VARCHAR(20) NOT NULL
+                        Estado VARCHAR(20) NOT NULL,
+                        CondicionEspecial VARCHAR(50)
                     )
+                END
+                ELSE
+                BEGIN
+                    -- Agregar la columna CondicionEspecial si no existe
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('tabla_digiturnos') AND name = 'CondicionEspecial')
+                    BEGIN
+                        ALTER TABLE tabla_digiturnos ADD CondicionEspecial VARCHAR(50)
+                    END
                 END
             """)
             conn.commit()
@@ -43,7 +52,7 @@ def crear_tabla_turnos():
     finally:
         conn.close()
 
-def generar_turno(tipo_servicio, documento, nombre=None):
+def generar_turno(tipo_servicio, documento, nombre=None, condicion_especial=None):
     """
     Genera un nuevo turno para el servicio especificado
     """
@@ -89,17 +98,18 @@ def generar_turno(tipo_servicio, documento, nombre=None):
             
             # Insertar el nuevo turno
             insert_query = """
-                INSERT INTO tabla_digiturnos (NumeroTurno, TipoServicio, Documento, Nombre, FechaCreacion, Estado)
-                VALUES (?, ?, ?, ?, GETDATE(), 'Pendiente')
+                INSERT INTO tabla_digiturnos (NumeroTurno, TipoServicio, Documento, Nombre, FechaCreacion, Estado, CondicionEspecial)
+                VALUES (?, ?, ?, ?, GETDATE(), 'Pendiente', ?)
             """
-            cursor.execute(insert_query, (numero_turno, tipo_servicio, documento, nombre))
+            cursor.execute(insert_query, (numero_turno, tipo_servicio, documento, nombre, condicion_especial))
             conn.commit()
             
             return {
                 'numero_turno': numero_turno,
                 'tipo_servicio': tipo_servicio,
                 'documento': documento,
-                'nombre': nombre
+                'nombre': nombre,
+                'condicion_especial': condicion_especial
             }
             
     except Exception as e:
@@ -117,7 +127,7 @@ def obtener_turnos_espera(tipo_servicio):
     try:
         with conn.cursor() as cursor:
             query = """
-                SELECT NumeroTurno, Documento, Nombre, FechaCreacion
+                SELECT NumeroTurno, Documento, Nombre, FechaCreacion, CondicionEspecial
                 FROM tabla_digiturnos
                 WHERE TipoServicio = ?
                 AND Estado = 'Pendiente'
@@ -131,7 +141,8 @@ def obtener_turnos_espera(tipo_servicio):
                     'numero_turno': row.NumeroTurno,
                     'documento': row.Documento,
                     'nombre': row.Nombre,
-                    'fecha_creacion': row.FechaCreacion
+                    'fecha_creacion': row.FechaCreacion,
+                    'condicion_especial': row.CondicionEspecial
                 })
             return turnos
     except Exception as e:

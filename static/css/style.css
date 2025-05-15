@@ -226,4 +226,72 @@ body {
 
 #cedulaFeedback .text-danger {
     color: var(--accent-color);
+}
+
+/* Estilos para las opciones de condición especial */
+.form-check {
+    transition: all 0.3s ease;
+}
+
+.form-check:hover {
+    transform: translateY(-2px);
+}
+
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-color: var(--secondary-color);
+}
+
+.form-check-input:checked + .form-check-label {
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+.form-check-input:checked ~ .form-check-label i {
+    transform: scale(1.2);
+}
+
+.form-check-label i {
+    transition: transform 0.3s ease;
+    width: 24px;
+    text-align: center;
+}
+
+/* Colores específicos para cada condición */
+.text-primary { color: var(--primary-color) !important; }
+.text-success { color: var(--success-color) !important; }
+.text-warning { color: var(--warning-color) !important; }
+.text-info { color: var(--secondary-color) !important; }
+
+/* Estilos para los badges de condiciones especiales */
+.badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 10px;
+}
+
+.bg-pink {
+    background-color: #fce7f3;
+    color: #be185d;
+}
+
+.bg-blue {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.bg-purple {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+
+/* Estilos para los iconos en los badges */
+.badge i {
+    font-size: 0.875rem;
+    margin-right: 0.25rem;
 } 

@@ -27,6 +27,18 @@
                             {{ session.get('usuario_nombre', '') }}
                         </span>
                     </li>
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <i class="fas fa-window-maximize me-2"></i>
+                            Ventanilla {{ session.get('ventanilla', '') }}
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <i class="fas fa-hospital me-2"></i>
+                            {{ session.get('tipo_servicio', '')|title }}
+                        </span>
+                    </li>
                 </ul>
                 <div class="d-flex">
                     <a href="{{ url_for('logout') }}" class="btn btn-outline-light">
@@ -82,6 +94,7 @@
                                                 <th>Documento</th>
                                                 <th>Nombre</th>
                                                 <th>Hora</th>
+                                                <th>Condición</th>
                                                 <th>Acciones</th>
                                             </tr>
                                         </thead>
@@ -100,6 +113,7 @@
                                                 <th>Documento</th>
                                                 <th>Nombre</th>
                                                 <th>Hora</th>
+                                                <th>Condición</th>
                                                 <th>Acciones</th>
                                             </tr>
                                         </thead>
@@ -118,6 +132,7 @@
                                                 <th>Documento</th>
                                                 <th>Nombre</th>
                                                 <th>Hora</th>
+                                                <th>Condición</th>
                                                 <th>Acciones</th>
                                             </tr>
                                         </thead>
@@ -136,6 +151,7 @@
                                                 <th>Documento</th>
                                                 <th>Nombre</th>
                                                 <th>Hora</th>
+                                                <th>Condición</th>
                                                 <th>Acciones</th>
                                             </tr>
                                         </thead>
@@ -173,9 +189,13 @@
                                     <i class="fas fa-id-card me-2"></i>
                                     <strong>Documento:</strong> {{ turno_actual.documento }}
                                 </p>
-                                <p class="mb-0">
+                                <p class="mb-2">
                                     <i class="fas fa-user me-2"></i>
                                     <strong>Nombre:</strong> {{ turno_actual.nombre }}
+                                </p>
+                                <p class="mb-0">
+                                    <i class="fas fa-window-maximize me-2"></i>
+                                    <strong>Ventanilla:</strong> {{ session.get('ventanilla', '') }}
                                 </p>
                             {% else %}
                                 <p class="text-muted">No hay turno activo</p>
@@ -235,7 +255,16 @@
                         <td>${turno.nombre}</td>
                         <td>${turno.hora}</td>
                         <td>
-                            <button class="btn btn-success btn-sm llamar-turno" 
+                            ${turno.condicion_especial && turno.condicion_especial !== 'ninguna' ? 
+                                `<span class="badge ${getBadgeClass(turno.condicion_especial)}">
+                                    <i class="${getIconClass(turno.condicion_especial)} me-1"></i>
+                                    ${getCondicionText(turno.condicion_especial)}
+                                </span>` : 
+                                '-'
+                            }
+                        </td>
+                        <td>
+                            <button class="btn btn-primary btn-sm llamar-turno" 
                                     data-turno="${turno.numero_turno}"
                                     data-documento="${turno.documento}"
                                     data-nombre="${turno.nombre}"
@@ -245,13 +274,33 @@
                         </td>
                     </tr>
                 `).join('');
+            }
 
-                // Guardar los turnos actuales para este servicio
-                turnosActuales[servicio] = turnos;
-                
-                // Si este es el servicio activo, actualizar el turno actual
-                if (servicio === servicioActivo) {
-                    actualizarTurnoActual(servicio);
+            // Funciones auxiliares para las condiciones especiales
+            function getBadgeClass(condicion) {
+                switch(condicion) {
+                    case 'gestante': return 'bg-pink';
+                    case 'adulto_mayor': return 'bg-blue';
+                    case 'discapacidad': return 'bg-purple';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            function getIconClass(condicion) {
+                switch(condicion) {
+                    case 'gestante': return 'fas fa-baby';
+                    case 'adulto_mayor': return 'fas fa-user-clock';
+                    case 'discapacidad': return 'fas fa-wheelchair';
+                    default: return 'fas fa-info-circle';
+                }
+            }
+
+            function getCondicionText(condicion) {
+                switch(condicion) {
+                    case 'gestante': return 'Gestante';
+                    case 'adulto_mayor': return 'Adulto Mayor';
+                    case 'discapacidad': return 'Discapacidad';
+                    default: return 'Condición Especial';
                 }
             }
 
@@ -266,10 +315,20 @@
                             <i class="fas fa-id-card me-2"></i>
                             <strong>Documento:</strong> ${turno.documento}
                         </p>
-                        <p class="mb-0">
+                        <p class="mb-2">
                             <i class="fas fa-user me-2"></i>
                             <strong>Nombre:</strong> ${turno.nombre}
                         </p>
+                        <p class="mb-0">
+                            <i class="fas fa-window-maximize me-2"></i>
+                            <strong>Ventanilla:</strong> {{ session.get('ventanilla', '') }}
+                        </p>
+                        ${turno.condicion_especial && turno.condicion_especial !== 'ninguna' ? `
+                            <p class="mb-0">
+                                <i class="${getIconClass(turno.condicion_especial)} me-2"></i>
+                                <strong>Condición:</strong> ${getCondicionText(turno.condicion_especial)}
+                            </p>
+                        ` : ''}
                     `;
                 } else {
                     turnoActual.textContent = '-';
@@ -318,4 +377,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
