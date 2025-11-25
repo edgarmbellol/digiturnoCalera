@@ -76,22 +76,28 @@ async def obtener_turnos_servicio(servicio: str):
     try:
         cursor.execute("""
             SELECT 
-                id, numero_turno, nombre_paciente, servicio, 
-                condicion_especial, fecha_registro, estado
-            FROM turnos
-            WHERE servicio = ? AND estado IN ('espera', 'llamado')
+                t.id, t.numero_turno, t.nombre_paciente, t.servicio, 
+                t.condicion_especial, t.es_prioritario, t.fecha_registro, 
+                t.estado, t.profesional_codigo, t.ventanilla,
+                sp.nombre_usuario as profesional_nombre
+            FROM turnos t
+            LEFT JOIN sesiones_profesionales sp 
+                ON t.profesional_codigo = sp.codigo_usuario 
+                AND sp.activo = 1
+            WHERE t.servicio = ? AND t.estado IN ('espera', 'llamado')
             ORDER BY 
-                CASE estado
+                CASE t.estado
                     WHEN 'llamado' THEN 0
                     WHEN 'espera' THEN 1
                 END,
-                CASE condicion_especial
+                t.es_prioritario DESC,
+                CASE t.condicion_especial
                     WHEN 'Discapacitado' THEN 1
                     WHEN 'Tercera Edad' THEN 2
                     WHEN 'Embarazo' THEN 3
                     ELSE 4
                 END,
-                fecha_registro ASC
+                t.fecha_registro ASC
         """, (servicio,))
         
         turnos = cursor.fetchall()
@@ -99,7 +105,7 @@ async def obtener_turnos_servicio(servicio: str):
         resultado = []
         for turno in turnos:
             fecha_registro = datetime.fromisoformat(turno['fecha_registro'])
-            tiempo_espera = str(datetime.now() - fecha_registro).split('.')[0]
+            tiempo_espera = str(datetime.utcnow() - fecha_registro).split('.')[0]
             
             resultado.append(PacienteEnEspera(
                 id=turno['id'],
@@ -107,8 +113,12 @@ async def obtener_turnos_servicio(servicio: str):
                 nombre_paciente=turno['nombre_paciente'],
                 servicio=turno['servicio'],
                 condicion_especial=turno['condicion_especial'],
+                es_prioritario=bool(turno['es_prioritario']),
                 tiempo_espera=tiempo_espera,
-                estado=turno['estado']
+                estado=turno['estado'],
+                profesional_codigo=turno['profesional_codigo'],
+                ventanilla=turno['ventanilla'],
+                profesional_nombre=turno['profesional_nombre'] or turno['profesional_codigo']
             ))
         
         return resultado
@@ -182,6 +192,27 @@ async def atender_paciente(data: AtenderPacienteRequest):
     cursor = conn.cursor()
     
     try:
+        # Primero verificar quién está llamando al paciente
+        cursor.execute("""
+            SELECT profesional_codigo, ventanilla, estado
+            FROM turnos
+            WHERE id = ?
+        """, (data.turno_id,))
+        
+        turno = cursor.fetchone()
+        
+        if not turno:
+            raise HTTPException(status_code=404, detail="Turno no encontrado")
+        
+        # Si el paciente está siendo llamado, verificar que el profesional que lo está llamando sea el que intenta atenderlo
+        if turno['estado'] == 'llamado' and turno['profesional_codigo']:
+            # Validar que solo el profesional que está llamando pueda marcar como atendido/no responde
+            if data.codigo_profesional and data.codigo_profesional != turno['profesional_codigo']:
+                raise HTTPException(
+                    status_code=403, 
+                    detail=f"Este paciente está siendo llamado por el profesional {turno['profesional_codigo']} en la ventanilla {turno['ventanilla']}. Solo ese profesional puede marcarlo como atendido o no responde."
+                )
+        
         if data.estado == "atendido":
             cursor.execute("""
                 UPDATE turnos 
@@ -207,6 +238,8 @@ async def atender_paciente(data: AtenderPacienteRequest):
             "message": f"Paciente marcado como {data.estado}"
         }
     
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Error al atender paciente: {str(e)}")
@@ -225,10 +258,10 @@ async def obtener_rellamados(servicio: str):
         cursor.execute("""
             SELECT 
                 id, numero_turno, nombre_paciente, servicio, 
-                condicion_especial, fecha_registro, rellamado
+                condicion_especial, es_prioritario, fecha_registro, rellamado
             FROM turnos
             WHERE servicio = ? AND estado = 'no_responde'
-            ORDER BY fecha_llamado DESC
+            ORDER BY es_prioritario DESC, fecha_llamado DESC
         """, (servicio,))
         
         turnos = cursor.fetchall()
@@ -236,7 +269,7 @@ async def obtener_rellamados(servicio: str):
         resultado = []
         for turno in turnos:
             fecha_registro = datetime.fromisoformat(turno['fecha_registro'])
-            tiempo_espera = str(datetime.now() - fecha_registro).split('.')[0]
+            tiempo_espera = str(datetime.utcnow() - fecha_registro).split('.')[0]
             
             resultado.append({
                 "id": turno['id'],
@@ -244,6 +277,7 @@ async def obtener_rellamados(servicio: str):
                 "nombre_paciente": turno['nombre_paciente'],
                 "servicio": turno['servicio'],
                 "condicion_especial": turno['condicion_especial'],
+                "es_prioritario": bool(turno['es_prioritario']),
                 "tiempo_espera": tiempo_espera,
                 "rellamado": turno['rellamado']
             })

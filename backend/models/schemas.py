@@ -9,6 +9,7 @@ class KioskInput(BaseModel):
     documento: str = Field(..., min_length=5, max_length=20)
     servicio: str
     condicion_especial: Optional[str] = "Ninguna"
+    es_prioritario: Optional[bool] = False
 
 
 class TurnoResponse(BaseModel):
@@ -50,6 +51,7 @@ class AtenderPacienteRequest(BaseModel):
     turno_id: int
     estado: str  # "atendido" o "no_responde"
     observacion: Optional[str] = None
+    codigo_profesional: Optional[str] = None  # Para validar que solo el profesional que llama pueda atender
 
 
 # Schemas para Médicos
@@ -88,6 +90,10 @@ class PacienteEnEspera(BaseModel):
     nombre_paciente: str
     servicio: str
     condicion_especial: Optional[str]
+    es_prioritario: Optional[bool] = False
     tiempo_espera: str
     estado: Optional[str] = "espera"
+    profesional_codigo: Optional[str] = None  # Código del profesional que está llamando
+    ventanilla: Optional[int] = None  # Ventanilla del profesional que está llamando
+    profesional_nombre: Optional[str] = None  # Nombre del profesional que está llamando
 

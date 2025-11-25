@@ -183,7 +183,7 @@ async def obtener_turnos_en_espera():
         resultado = []
         for turno in turnos:
             fecha_registro = datetime.fromisoformat(turno['fecha_registro'])
-            tiempo_espera = str(datetime.now() - fecha_registro).split('.')[0]
+            tiempo_espera = str(datetime.utcnow() - fecha_registro).split('.')[0]
             
             resultado.append(PacienteEnEspera(
                 id=turno['id'],

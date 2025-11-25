@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     SQL_DRIVER: str = "SQL Server"  # Driver genérico de Windows
     
     # SQLite Local
-    SQLITE_DB_PATH: str = "digiturno.db"
+    SQLITE_DB_PATH: str = "../digiturno.db"
     
     # Google Gemini AI
     GEMINI_API_KEY: str = "AIzaSyAyIyYauiciiyuE5RaPtZX5yfKxf1-21DE"

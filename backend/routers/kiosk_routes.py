@@ -32,9 +32,10 @@ async def registrar_turno(data: KioskInput):
     try:
         cursor.execute("""
             INSERT INTO turnos 
-            (numero_turno, documento, nombre_paciente, servicio, condicion_especial, estado)
-            VALUES (?, ?, ?, ?, ?, 'espera')
-        """, (numero_turno, data.documento, nombre_paciente, data.servicio, data.condicion_especial))
+            (numero_turno, documento, nombre_paciente, servicio, condicion_especial, es_prioritario, estado)
+            VALUES (?, ?, ?, ?, ?, ?, 'espera')
+        """, (numero_turno, data.documento, nombre_paciente, data.servicio, data.condicion_especial, 
+              1 if data.es_prioritario else 0))
         
         turno_id = cursor.lastrowid
         conn.commit()

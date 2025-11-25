@@ -290,8 +290,8 @@ async def llamar_paciente_cita(data: LlamarPacienteRequest):
         
         cursor.execute("""
             INSERT INTO turnos 
-            (numero_turno, documento, nombre_paciente, servicio, estado, ventanilla, profesional_codigo, fecha_llamado)
-            VALUES (?, ?, ?, 'Consulta Médica', 'llamado', ?, ?, CURRENT_TIMESTAMP)
+            (numero_turno, documento, nombre_paciente, servicio, es_prioritario, estado, ventanilla, profesional_codigo, fecha_llamado)
+            VALUES (?, ?, ?, 'Consulta Médica', 0, 'llamado', ?, ?, CURRENT_TIMESTAMP)
         """, (numero_turno, documento, nombre_paciente, data.ventanilla, data.codigo_profesional))
         
         turno_id = cursor.lastrowid

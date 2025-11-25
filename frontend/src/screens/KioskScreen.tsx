@@ -77,10 +77,14 @@ const KioskScreen = () => {
     setError('')
     
     try {
+      // Si seleccionó "Discapacitado", marcarlo como prioritario automáticamente
+      const esPrioritario = condicionSeleccionada === 'Discapacitado'
+      
       const resultado = await kioskAPI.registrarTurno({
         documento,
         servicio: servicioSeleccionado,
-        condicion_especial: condicionSeleccionada
+        condicion_especial: condicionSeleccionada,
+        es_prioritario: esPrioritario
       })
       
       setTurnoCreado({

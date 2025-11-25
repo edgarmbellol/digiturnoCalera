@@ -66,6 +66,7 @@ export const professionalAPI = {
     turno_id: number
     estado: string
     observacion?: string
+    codigo_profesional?: string
   }) => {
     const response = await api.post('/professional/atender', data)
     return response.data

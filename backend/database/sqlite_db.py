@@ -28,6 +28,7 @@ def init_db():
             nombre_paciente TEXT NOT NULL,
             servicio TEXT NOT NULL,
             condicion_especial TEXT,
+            es_prioritario INTEGER DEFAULT 0,
             ventanilla INTEGER,
             estado TEXT DEFAULT 'espera',
             profesional_codigo TEXT,
@@ -123,53 +124,51 @@ def generar_numero_turno(servicio: str, verificar_unicidad: bool = True) -> str:
         
         # Asegurar que sea de exactamente 2 caracteres
         prefijo = (prefijo + "XX")[:2]
-    fecha_hoy = datetime.now().strftime("%Y-%m-%d")
     
-    # Intentar hasta encontrar un número único
-    max_intentos = 100
-    for intento in range(max_intentos):
-        # Obtener el último número del día para este servicio
+    # Obtener el último número para este servicio (sin filtro de fecha)
+    # Esto asegura que siempre incrementemos correctamente
+    cursor.execute("""
+        SELECT numero_turno FROM turnos 
+        WHERE numero_turno LIKE ?
+        ORDER BY id DESC LIMIT 1
+    """, (f"{prefijo}-%",))
+    
+    resultado = cursor.fetchone()
+    
+    if resultado:
+        # Extraer el número del formato "XX-0001"
+        ultimo_numero = int(resultado['numero_turno'].split('-')[1])
+        nuevo_numero = ultimo_numero + 1
+    else:
+        nuevo_numero = 1
+    
+    numero_turno = f"{prefijo}-{nuevo_numero:04d}"
+    
+    # Verificar que no exista (doble verificación de unicidad)
+    if verificar_unicidad:
         cursor.execute("""
-            SELECT numero_turno FROM turnos 
-            WHERE numero_turno LIKE ? AND DATE(fecha_registro) = ?
-            ORDER BY id DESC LIMIT 1
-        """, (f"{prefijo}-%", fecha_hoy))
+            SELECT COUNT(*) as count FROM turnos 
+            WHERE numero_turno = ?
+        """, (numero_turno,))
         
-        resultado = cursor.fetchone()
+        count = cursor.fetchone()['count']
         
-        if resultado:
-            # Extraer el número del formato "XX-0001"
-            ultimo_numero = int(resultado['numero_turno'].split('-')[1])
-            nuevo_numero = ultimo_numero + 1
-        else:
-            nuevo_numero = 1
-        
-        numero_turno = f"{prefijo}-{nuevo_numero:04d}"
-        
-        # Verificar que no exista (doble verificación de unicidad)
-        if verificar_unicidad:
-            cursor.execute("""
-                SELECT COUNT(*) as count FROM turnos 
-                WHERE numero_turno = ? AND DATE(fecha_registro) = ?
-            """, (numero_turno, fecha_hoy))
-            
-            count = cursor.fetchone()['count']
-            
-            if count == 0:
-                # Número único encontrado
-                conn.close()
-                return numero_turno
-            else:
-                # Ya existe, intentar con el siguiente
-                print(f"⚠️ Turno {numero_turno} ya existe, generando siguiente...")
-                continue
-        else:
+        if count > 0:
+            # Si ya existe, intentar recursivamente con el siguiente
+            print(f"⚠️ Turno {numero_turno} ya existe, generando siguiente...")
             conn.close()
-            return numero_turno
+            # Buscar manualmente el siguiente disponible
+            for i in range(nuevo_numero + 1, nuevo_numero + 100):
+                test_turno = f"{prefijo}-{i:04d}"
+                cursor = get_db_connection().cursor()
+                cursor.execute("SELECT COUNT(*) as count FROM turnos WHERE numero_turno = ?", (test_turno,))
+                if cursor.fetchone()['count'] == 0:
+                    cursor.connection.close()
+                    return test_turno
+            raise Exception(f"No se pudo generar un número de turno único")
     
-    # Si llegamos aquí, algo salió mal
     conn.close()
-    raise Exception(f"No se pudo generar un número de turno único después de {max_intentos} intentos")
+    return numero_turno
 
 
 def verificar_turno_existente(documento: str) -> dict:

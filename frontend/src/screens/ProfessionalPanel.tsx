@@ -9,9 +9,13 @@ interface Turno {
   nombre_paciente: string
   servicio: string
   condicion_especial: string | null
+  es_prioritario?: boolean
   tiempo_espera: string
   rellamado?: number
   estado?: string
+  profesional_codigo?: string | null
+  ventanilla?: number | null
+  profesional_nombre?: string | null
 }
 
 const ProfessionalPanel = () => {
@@ -98,7 +102,8 @@ const ProfessionalPanel = () => {
       await professionalAPI.atenderPaciente({
         turno_id: turnoSeleccionado,
         estado: accionModal,
-        observacion: observacion || undefined
+        observacion: observacion || undefined,
+        codigo_profesional: sesion.codigo_usuario
       })
 
       setMostrarModal(false)
@@ -109,8 +114,11 @@ const ProfessionalPanel = () => {
       // Recargar turnos
       await cargarTurnos(sesion.servicio)
       await cargarRellamados(sesion.servicio)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error atendiendo paciente:', error)
+      // Mostrar mensaje de error al usuario
+      const mensaje = error.response?.data?.detail || error.message || 'Error al atender paciente'
+      alert(`❌ ${mensaje}`)
     }
   }
 
@@ -210,39 +218,75 @@ const ProfessionalPanel = () => {
           <div className="grid gap-4">
             {turnosMostrar.map((turno) => {
               const esLlamado = turno.estado === 'llamado'
+              const esMiLlamado = esLlamado && turno.profesional_codigo === sesion?.codigo_usuario
+              const otroProfesionalLlamando = esLlamado && !esMiLlamado
               
               return (
                 <div 
                   key={turno.id} 
-                  className={`card hover:shadow-2xl transition-all ${
-                    esLlamado ? 'border-4 border-hospital-blue bg-blue-50' : ''
+                  className={`card hover:shadow-2xl transition-all relative ${
+                    turno.es_prioritario 
+                      ? 'border-4 border-purple-500 bg-gradient-to-r from-purple-50 to-indigo-50 ring-2 ring-purple-300' 
+                      : esLlamado 
+                        ? esMiLlamado
+                          ? 'border-4 border-hospital-blue bg-blue-50' 
+                          : 'border-4 border-orange-500 bg-orange-50'
+                        : ''
                   }`}
                 >
+                  {/* Indicador de prioridad */}
+                  {turno.es_prioritario && (
+                    <div className="absolute -top-3 -right-3 bg-gradient-to-br from-purple-600 to-purple-800 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2 animate-pulse">
+                      <span className="text-2xl">♿</span>
+                      <span className="font-bold text-sm">PRIORITARIO</span>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-6">
                       <div className={`rounded-lg p-4 min-w-[120px] text-center ${
-                        esLlamado 
-                          ? 'bg-hospital-blue text-white animate-pulse' 
-                          : 'bg-hospital-blue text-white'
+                        turno.es_prioritario
+                          ? 'bg-gradient-to-br from-purple-600 to-purple-800 text-white'
+                          : esLlamado 
+                            ? esMiLlamado
+                              ? 'bg-hospital-blue text-white animate-pulse' 
+                              : 'bg-orange-500 text-white'
+                            : 'bg-hospital-blue text-white'
                       }`}>
                         <p className="text-sm opacity-75">Turno</p>
                         <p className="text-3xl font-bold">{turno.numero_turno}</p>
                       </div>
                       <div>
                         <div className="flex items-center space-x-3 mb-1">
-                          <p className="text-2xl font-bold text-hospital-dark">
+                          <p className={`text-2xl font-bold ${
+                            turno.es_prioritario ? 'text-purple-900' : 'text-hospital-dark'
+                          }`}>
                             {turno.nombre_paciente}
                           </p>
                           {esLlamado && (
-                            <span className="bg-hospital-blue text-white px-3 py-1 rounded-full text-sm font-semibold animate-pulse">
-                              LLAMANDO...
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              esMiLlamado
+                                ? 'bg-hospital-blue text-white animate-pulse'
+                                : 'bg-orange-500 text-white'
+                            }`}>
+                              {esMiLlamado ? 'LLAMANDO...' : 'SIENDO LLAMADO'}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          {turno.condicion_especial && turno.condicion_especial !== 'Ninguna' && (
+                          {turno.es_prioritario && (
+                            <span className="bg-gradient-to-r from-purple-500 to-purple-700 text-white px-4 py-1 rounded-full font-bold text-base shadow-md">
+                              ♿ Atención Prioritaria
+                            </span>
+                          )}
+                          {turno.condicion_especial && turno.condicion_especial !== 'Ninguna' && !turno.es_prioritario && (
                             <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-semibold">
                               {turno.condicion_especial}
+                            </span>
+                          )}
+                          {otroProfesionalLlamando && (
+                            <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-semibold border-2 border-orange-500">
+                              📞 {turno.profesional_nombre || turno.profesional_codigo} - Ventanilla {turno.ventanilla}
                             </span>
                           )}
                           <span className="flex items-center">
@@ -267,7 +311,7 @@ const ProfessionalPanel = () => {
                           <Phone className="w-5 h-5" />
                           <span>Llamar</span>
                         </button>
-                      ) : (
+                      ) : esMiLlamado ? (
                         <>
                           <button
                             onClick={() => handleAbrirModal(turno.id, 'atendido')}
@@ -284,6 +328,15 @@ const ProfessionalPanel = () => {
                             <span>No Responde</span>
                           </button>
                         </>
+                      ) : (
+                        <button
+                          disabled
+                          className="bg-gray-300 text-gray-500 cursor-not-allowed px-6 py-3 rounded-lg font-semibold flex items-center space-x-2"
+                          title={`Este paciente está siendo llamado por ${turno.profesional_nombre || turno.profesional_codigo} en la ventanilla ${turno.ventanilla}`}
+                        >
+                          <XCircle className="w-5 h-5" />
+                          <span>Otro profesional llamando</span>
+                        </button>
                       )}
                     </div>
                   </div>
